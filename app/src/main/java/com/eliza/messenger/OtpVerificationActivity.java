@@ -117,25 +117,54 @@ public class OtpVerificationActivity extends AppCompatActivity {
     }
 
     private void setupResendButton() {
-        Log.d(TAG, "Setting up resend code button");
-        findViewById(R.id.text_resend).setOnClickListener(v -> {
-            Log.d(TAG, "Resend code button clicked");
-            resendVerificationCode();
-        });
+        Log.d(TAG, "Setting up resend button");
+        MaterialButton resendButton = findViewById(R.id.button_resend);
+        if (resendButton != null) {
+            resendButton.setOnClickListener(v -> {
+                Log.d(TAG, "Resend button clicked");
+                resendButton.setEnabled(false); // Disable to prevent multiple clicks
+                
+                if (TestCredentials.USE_TEST_CREDENTIALS && 
+                    TestCredentials.isTestPhoneNumber(phoneNumber)) {
+                    Log.d(TAG, "Using test credentials for resend");
+                    Toast.makeText(this, "Test code: " + TestCredentials.TEST_VERIFICATION_CODE, 
+                        Toast.LENGTH_LONG).show();
+                    resendButton.setEnabled(true);
+                    return;
+                }
+
+                // Start the verification process again
+                startPhoneNumberVerification();
+            });
+        } else {
+            Log.e(TAG, "Resend button not found");
+        }
     }
     
     private void setupTestCodeButton() {
-        Log.d(TAG, "Setting up test code button");
-        // Setup test button for development/testing
         MaterialButton testButton = findViewById(R.id.button_test_code);
         if (testButton != null) {
-            // Only show in debug builds
-            if (getResources().getBoolean(R.bool.is_debug_build)) {
+            if (TestCredentials.USE_TEST_CREDENTIALS && getResources().getBoolean(R.bool.is_debug_build)) {
                 testButton.setVisibility(View.VISIBLE);
                 testButton.setOnClickListener(v -> {
-                    // Fill in test OTP code
-                    fillOtpFields(TestCredentials.TEST_VERIFICATION_CODE);
+                    Log.d(TAG, "Using test verification code");
+                    String testCode = TestCredentials.TEST_VERIFICATION_CODE;
+                    // Fill in the OTP fields
+                    EditText[] otpFields = {
+                        findViewById(R.id.otp_1),
+                        findViewById(R.id.otp_2),
+                        findViewById(R.id.otp_3),
+                        findViewById(R.id.otp_4),
+                        findViewById(R.id.otp_5),
+                        findViewById(R.id.otp_6)
+                    };
+                    
+                    for (int i = 0; i < testCode.length() && i < otpFields.length; i++) {
+                        otpFields[i].setText(String.valueOf(testCode.charAt(i)));
+                    }
                 });
+            } else {
+                testButton.setVisibility(View.GONE);
             }
         }
     }
@@ -214,22 +243,22 @@ public class OtpVerificationActivity extends AppCompatActivity {
                     public void onVerificationFailed(@NonNull FirebaseException e) {
                         Log.e(TAG, "onVerificationFailed: " + e.getMessage(), e);
                         
-                        String errorMessage = e.getMessage();
-                        if (errorMessage != null && errorMessage.contains("CONFIGURATION_NOT_FOUND")) {
-                            // Handle the specific Firebase configuration error
-                            Toast.makeText(OtpVerificationActivity.this,
-                                "Firebase Phone Auth is not properly configured. Please check your Firebase console settings.",
-                                Toast.LENGTH_LONG).show();
-                            
-                            // For development/testing, allow bypassing verification
-                            if (getResources().getBoolean(R.bool.is_debug_build)) {
-                                Log.w(TAG, "Debug mode enabled, bypassing verification");
-                                proceedToNextScreen();
-                            }
+                        String errorMessage;
+                        if (e.getMessage() != null && e.getMessage().contains("BILLING_NOT_ENABLED")) {
+                            errorMessage = "SMS verification is not enabled. For testing, use one of these numbers:\n" +
+                                          "• +15555555555\n" +
+                                          "• Any number ending with 0000000000\n" +
+                                          "\nTest verification code: 123456";
                         } else {
-                            Toast.makeText(OtpVerificationActivity.this,
-                                "Verification failed: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                            errorMessage = "Verification failed: " + e.getMessage();
+                        }
+                        
+                        Toast.makeText(OtpVerificationActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                        
+                        // Re-enable the resend button
+                        MaterialButton resendButton = findViewById(R.id.button_resend);
+                        if (resendButton != null) {
+                            resendButton.setEnabled(true);
                         }
                     }
 
@@ -302,22 +331,22 @@ public class OtpVerificationActivity extends AppCompatActivity {
                         public void onVerificationFailed(@NonNull FirebaseException e) {
                             Log.e(TAG, "Resend: onVerificationFailed: " + e.getMessage(), e);
                             
-                            String errorMessage = e.getMessage();
-                            if (errorMessage != null && errorMessage.contains("CONFIGURATION_NOT_FOUND")) {
-                                // Handle the specific Firebase configuration error
-                                Toast.makeText(OtpVerificationActivity.this,
-                                    "Firebase Phone Auth is not properly configured. Please check your Firebase console settings.",
-                                    Toast.LENGTH_LONG).show();
-                                
-                                // For development/testing, allow bypassing verification
-                                if (getResources().getBoolean(R.bool.is_debug_build)) {
-                                    Log.w(TAG, "Debug mode enabled, bypassing verification");
-                                    proceedToNextScreen();
-                                }
+                            String errorMessage;
+                            if (e.getMessage() != null && e.getMessage().contains("BILLING_NOT_ENABLED")) {
+                                errorMessage = "SMS verification is not enabled. For testing, use one of these numbers:\n" +
+                                              "• +15555555555\n" +
+                                              "• Any number ending with 0000000000\n" +
+                                              "\nTest verification code: 123456";
                             } else {
-                                Toast.makeText(OtpVerificationActivity.this,
-                                    "Verification failed: " + e.getMessage(),
-                                    Toast.LENGTH_SHORT).show();
+                                errorMessage = "Verification failed: " + e.getMessage();
+                            }
+                            
+                            Toast.makeText(OtpVerificationActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                            
+                            // Re-enable the resend button
+                            MaterialButton resendButton = findViewById(R.id.button_resend);
+                            if (resendButton != null) {
+                                resendButton.setEnabled(true);
                             }
                         }
 

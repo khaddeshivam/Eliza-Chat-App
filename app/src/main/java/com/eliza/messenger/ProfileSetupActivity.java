@@ -17,10 +17,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.Timestamp;
 import com.eliza.messenger.util.TestCredentials;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import android.widget.ProgressBar;
 
 public class ProfileSetupActivity extends AppCompatActivity {
     private static final String TAG = "ProfileSetupActivity";
@@ -38,16 +40,31 @@ public class ProfileSetupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_setup);
         
-        Log.d(TAG, "onCreate: Initializing Profile Setup screen");
-
         // Initialize Firebase
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         
-        Log.d(TAG, "Firebase services initialized");
+        // Check if user is authenticated
+        if (auth.getCurrentUser() == null && !TestCredentials.USE_TEST_CREDENTIALS) {
+            Log.e(TAG, "No authenticated user found");
+            Toast.makeText(this, "Please authenticate first", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, PhoneAuthActivity.class));
+            finish();
+            return;
+        }
 
         // Initialize views
+        initializeViews();
+        setupClickListeners();
+        
+        // Set test data if using test credentials
+        if (TestCredentials.USE_TEST_CREDENTIALS) {
+            setupTestProfile();
+        }
+    }
+
+    private void initializeViews() {
         profileImage = findViewById(R.id.profile_image);
         firstNameInput = findViewById(R.id.first_name_input);
         lastNameInput = findViewById(R.id.last_name_input);
@@ -59,11 +76,14 @@ public class ProfileSetupActivity extends AppCompatActivity {
             addPhotoButton == null || saveButton == null || backButton == null) {
             Log.e(TAG, "One or more views not found during initialization");
         }
+    }
 
+    private void setupClickListeners() {
         // Setup image picker
         setupImagePicker();
 
         // Setup click listeners
+        ImageButton addPhotoButton = findViewById(R.id.button_add_photo);
         if (addPhotoButton != null) {
             addPhotoButton.setOnClickListener(v -> {
                 Log.d(TAG, "Add photo button clicked");
@@ -71,6 +91,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
             });
         }
         
+        MaterialButton saveButton = findViewById(R.id.button_save);
         if (saveButton != null) {
             saveButton.setOnClickListener(v -> {
                 Log.d(TAG, "Save button clicked");
@@ -78,6 +99,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
             });
         }
         
+        ImageButton backButton = findViewById(R.id.button_back);
         if (backButton != null) {
             backButton.setOnClickListener(v -> {
                 Log.d(TAG, "Back button clicked");
@@ -143,6 +165,11 @@ public class ProfileSetupActivity extends AppCompatActivity {
         }
         
         // We could also set a test image here if needed
+    }
+
+    private void setupTestProfile() {
+        Log.d(TAG, "Setting up test profile");
+        fillTestProfileData();
     }
 
     private void saveProfile() {
@@ -219,59 +246,110 @@ public class ProfileSetupActivity extends AppCompatActivity {
     }
 
     private void saveProfileData(String firstName, String lastName, String imageUrl) {
-        try {
-            String userId = auth.getCurrentUser() != null ? 
-                auth.getCurrentUser().getUid() : TestCredentials.TEST_USER_ID;
-                
-            Log.d(TAG, "Saving profile data for user: " + userId);
-            
-            Map<String, Object> user = new HashMap<>();
-            user.put("firstName", firstName);
-            user.put("lastName", lastName);
-            
-            String phoneNumber = auth.getCurrentUser() != null ? 
-                auth.getCurrentUser().getPhoneNumber() : TestCredentials.TEST_PHONE_NUMBER;
-            user.put("phoneNumber", phoneNumber);
-            
-            if (imageUrl != null) {
-                user.put("profileImage", imageUrl);
-            }
-            
-            // Add a bio if using test credentials
-            if (TestCredentials.USE_TEST_CREDENTIALS && 
-                (TestCredentials.isTestPhoneNumber(phoneNumber) || getResources().getBoolean(R.bool.is_debug_build))) {
-                user.put("bio", TestCredentials.TEST_USER_BIO);
-            }
-            
-            Log.d(TAG, "Profile data prepared: " + user);
+        String userId;
+        String phoneNumber;
+        boolean isTestMode = TestCredentials.USE_TEST_CREDENTIALS;
+        
+        if (auth.getCurrentUser() != null) {
+            userId = auth.getCurrentUser().getUid();
+            phoneNumber = auth.getCurrentUser().getPhoneNumber();
+        } else if (isTestMode) {
+            userId = TestCredentials.TEST_USER_ID;
+            phoneNumber = TestCredentials.TEST_PHONE_NUMBER;
+            Log.d(TAG, "Using test credentials - ID: " + userId + ", Phone: " + phoneNumber);
+        } else {
+            Log.e(TAG, "No authenticated user and not in test mode");
+            Toast.makeText(this, "Authentication required", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, PhoneAuthActivity.class));
+            finish();
+            return;
+        }
 
-            db.collection("users").document(userId)
-                .set(user)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Profile saved successfully, navigating to HomeActivity");
-                    // Navigate to HomeActivity
-                    Intent intent = new Intent(this, HomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                })
+        Log.d(TAG, "Saving profile data for user: " + userId);
+
+        // Create a user profile map
+        Map<String, Object> user = new HashMap<>();
+        user.put("userId", userId);
+        user.put("firstName", firstName);
+        user.put("lastName", lastName);
+        user.put("phoneNumber", phoneNumber);
+        user.put("createdAt", Timestamp.now());
+        user.put("updatedAt", Timestamp.now());
+        
+        if (imageUrl != null) {
+            user.put("profileImage", imageUrl);
+        }
+        
+        // Add test account flags if in test mode
+        if (isTestMode) {
+            user.put("testAccount", true);
+            user.put("testUserId", userId);
+            user.put("bio", TestCredentials.TEST_USER_BIO);
+        }
+        
+        Log.d(TAG, "Profile data prepared: " + user);
+
+        // Show loading state
+        MaterialButton saveButton = findViewById(R.id.button_save);
+        ProgressBar progressBar = findViewById(R.id.progress_bar);
+        
+        if (saveButton != null) {
+            saveButton.setEnabled(false);
+        }
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        // For test mode, sign in with email/password first
+        if (isTestMode && auth.getCurrentUser() == null) {
+            auth.signInWithEmailAndPassword(TestCredentials.TEST_EMAIL, TestCredentials.TEST_PASSWORD)
+                .addOnSuccessListener(result -> saveUserToFirestore(userId, user, saveButton, progressBar))
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to save profile: " + e.getMessage(), e);
-                    MaterialButton saveButton = findViewById(R.id.button_save);
-                    if (saveButton != null) {
-                        saveButton.setEnabled(true);
-                    }
-                    Toast.makeText(this, "Failed to save profile: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                    // If sign in fails, create the test account
+                    auth.createUserWithEmailAndPassword(TestCredentials.TEST_EMAIL, TestCredentials.TEST_PASSWORD)
+                        .addOnSuccessListener(createResult -> saveUserToFirestore(userId, user, saveButton, progressBar))
+                        .addOnFailureListener(createError -> handleSaveError(createError, saveButton, progressBar));
                 });
-        } catch (Exception e) {
-            Log.e(TAG, "Exception in saveProfileData: " + e.getMessage(), e);
-            MaterialButton saveButton = findViewById(R.id.button_save);
-            if (saveButton != null) {
-                saveButton.setEnabled(true);
-            }
-            Toast.makeText(this, "Error saving profile: " + e.getMessage(),
-                Toast.LENGTH_SHORT).show();
+        } else {
+            saveUserToFirestore(userId, user, saveButton, progressBar);
+        }
+    }
+
+    private void saveUserToFirestore(String userId, Map<String, Object> userData, 
+                                   MaterialButton saveButton, ProgressBar progressBar) {
+        db.collection("users").document(userId)
+            .set(userData)
+            .addOnSuccessListener(aVoid -> {
+                Log.d(TAG, "Profile saved successfully");
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+                
+                // Navigate to HomeActivity
+                Intent intent = new Intent(this, HomeActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            })
+            .addOnFailureListener(e -> handleSaveError(e, saveButton, progressBar));
+    }
+
+    private void handleSaveError(Exception e, MaterialButton saveButton, ProgressBar progressBar) {
+        Log.e(TAG, "Failed to save profile: " + e.getMessage(), e);
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+        }
+        
+        String errorMessage;
+        if (e.getMessage() != null && e.getMessage().contains("PERMISSION_DENIED")) {
+            errorMessage = "Unable to save profile. Please ensure you have an active internet connection and try again.";
+        } else {
+            errorMessage = "Failed to save profile: " + e.getMessage();
+        }
+        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+        
+        if (saveButton != null) {
+            saveButton.setEnabled(true);
         }
     }
     

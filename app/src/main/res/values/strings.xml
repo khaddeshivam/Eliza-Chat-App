@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Eliza Messenger</string>
+    <string name="app_name">Eliza</string>
     <string name="onboarding_title">Connect easily with your family and friends over countries</string>
     <string name="onboarding_image">Onboarding illustration</string>
     <string name="phone_verification_subtitle">Please confirm your country code and enter your phone number</string>
@@ -13,26 +13,33 @@
 
     <!-- Welcome Screen -->
     <string name="welcome_title">Connect easily with\nyour family and friends\nover countries</string>
+    <string name="welcome">Welcome to Eliza</string>
     <string name="terms_and_privacy">Terms &amp; Privacy Policy</string>
     <string name="start_messaging">Start Messaging</string>
 
     <!-- Phone Verification -->
     <string name="enter_phone_number">Enter Your Phone Number</string>
+    <string name="enter_phone">Enter your phone number</string>
     <string name="phone_number_subtitle">Please confirm your country code and enter\nyour phone number</string>
     <string name="continue_button">Continue</string>
     <string name="country_code">+91</string>
 
     <!-- OTP Verification -->
-    <string name="enter_code">Enter Code</string>
-    <string name="code_sent_to">We have sent you an SMS with the code</string>
+    <string name="enter_code">Enter verification code</string>
+    <string name="code_sent_to">Code has been sent to</string>
     <string name="resend_code">Resend Code</string>
     <string name="backspace">Backspace</string>
 
     <!-- Profile Setup -->
     <string name="your_profile">Your Profile</string>
+    <string name="profile_setup">Set up your profile</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
     <string name="add_photo">Add Photo</string>
-    <string name="first_name">First Name (Required)</string>
-    <string name="last_name">Last Name (Optional)</string>
+    <string name="save_profile">Save Profile</string>
+    <string name="profile_saved">Profile saved successfully</string>
+    <string name="upload_progress">Uploading image…</string>
+    <string name="profile_image">Profile image</string>
     <string name="save">Save</string>
 
     <!-- Home Screen -->
@@ -43,7 +50,7 @@
     
     <!-- Test Credentials -->
     <string name="test_phone">Test Phone</string>
-    <string name="test_otp">Test OTP</string>
+    <string name="test_otp">Use Test Code</string>
     <string name="test_profile">Test Profile</string>
     <string name="using_test_credentials">Using test credentials</string>
 </resources>

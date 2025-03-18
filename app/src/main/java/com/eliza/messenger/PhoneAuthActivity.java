@@ -102,7 +102,7 @@ public class PhoneAuthActivity extends AppCompatActivity {
                 // Check if this is a test phone number
                 if (TestCredentials.isTestPhoneNumber(fullPhoneNumber)) {
                     Log.d(TAG, "Using test phone number: " + fullPhoneNumber);
-                    Toast.makeText(this, "Using test credentials", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Using test credentials\nVerification code: 123456", Toast.LENGTH_LONG).show();
                 }
                 
                 Intent intent = new Intent(this, OtpVerificationActivity.class);

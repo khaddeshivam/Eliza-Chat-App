@@ -9,7 +9,7 @@ public class TestCredentials {
     public static final boolean USE_TEST_CREDENTIALS = true;
     
     // Test phone numbers
-    public static final String TEST_PHONE_NUMBER = "+15555555555";
+    public static final String TEST_PHONE_NUMBER = "+1234567890";
     public static final String TEST_PHONE_NUMBER_2 = "+15555555556";
     public static final String TEST_PHONE_NUMBER_3 = "+15555555557";
     
@@ -26,6 +26,10 @@ public class TestCredentials {
     
     // Test profile image URL
     public static final String TEST_PROFILE_IMAGE_URL = "https://ui-avatars.com/api/?name=Test+User&background=random";
+    
+    // Test authentication
+    public static final String TEST_EMAIL = "test@elizachat.dev";
+    public static final String TEST_PASSWORD = "testuser123!@#";
     
     // Test contacts
     public static final String[][] TEST_CONTACTS = {
