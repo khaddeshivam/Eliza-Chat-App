@@ -13,6 +13,7 @@
     <color name="background">#FFFFFF</color>
     <color name="surface">#FFFFFF</color>
     <color name="error">#DC3545</color>
+    <color name="ripple">#1A2B6BF6</color>
     
     <!-- Legacy Colors (kept for compatibility) -->
     <color name="black">#FF000000</color>
