@@ -72,8 +72,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         
         // Format the time
         String formattedTime = "";
-        if (chat.getLastMessageTime() != null) {
-            Date messageDate = chat.getLastMessageTime().toDate();
+        if (chat.getLastMessageTimestamp() != null) {
+            Date messageDate = chat.getLastMessageTimestamp().toDate();
             Date now = new Date();
             
             // If the message is from today, show time only

@@ -1,18 +1,21 @@
 package com.eliza.messenger.model;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.ServerTimestamp;
 import java.util.List;
 
 public class Chat {
     private String id;
     private List<String> participants;
     private String lastMessage;
+    @ServerTimestamp
     private Timestamp lastMessageTime;
     private String lastSenderId;
     private boolean isGroup;
     private String groupName;
     private String groupIcon;
     private int unreadCount;
+    private String photoUrl;
 
     // Required empty constructor for Firestore
     public Chat() {}
@@ -41,8 +44,8 @@ public class Chat {
         this.lastMessage = lastMessage;
     }
 
-    public Timestamp getLastMessageTime() {
-        return lastMessageTime;
+    public Timestamp getLastMessageTimestamp() {
+        return lastMessageTime != null ? new Timestamp(lastMessageTime.toDate()) : null;
     }
 
     public void setLastMessageTime(Timestamp lastMessageTime) {
@@ -87,6 +90,14 @@ public class Chat {
 
     public void setUnreadCount(int unreadCount) {
         this.unreadCount = unreadCount;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public String getName() {

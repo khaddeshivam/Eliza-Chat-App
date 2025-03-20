@@ -1,33 +1,36 @@
 package com.eliza.messenger;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.eliza.messenger.adapter.ChatAdapter;
+import com.eliza.messenger.databinding.ActivityHomeBinding;
+import com.eliza.messenger.model.Chat;
+import com.eliza.messenger.util.SwipeToDeleteCallback;
+import com.eliza.messenger.viewmodel.HomeViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.eliza.messenger.adapter.ChatAdapter;
-import com.eliza.messenger.model.Chat;
-import com.eliza.messenger.databinding.ActivityHomeBinding;
-
+import android.Manifest;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,12 +39,22 @@ import java.util.Random;
 
 public class HomeActivity extends AppCompatActivity {
     private static final String TAG = "HomeActivity";
+    private static final int PERMISSIONS_REQUEST_CODE = 100;
+    
     private FirebaseAuth auth;
     private FirebaseFirestore db;
     private ActivityHomeBinding binding;
     private ChatAdapter chatAdapter;
     private HomeViewModel viewModel;
     private List<Chat> filteredChatList = new ArrayList<>();
+    
+    private String[] requiredPermissions = {
+        Manifest.permission.READ_CONTACTS,
+        Manifest.permission.CAMERA,
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.READ_MEDIA_IMAGES,
+        Manifest.permission.RECORD_AUDIO
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +83,11 @@ public class HomeActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
+        // Request permissions
+        if (!checkPermissions()) {
+            requestPermissions();
+        }
+
         setupRecyclerView();
         setupClickListeners();
         setupBottomNavigation();
@@ -79,41 +97,61 @@ public class HomeActivity extends AppCompatActivity {
         // Observe ViewModel data
         observeViewModel();
 
-        // For testing purposes
-        generateTestData();
+        // For testing purposes - generate chats if none exist
+        loadOrGenerateTestData();
+    }
+    
+    private boolean checkPermissions() {
+        for (String permission : requiredPermissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this, requiredPermissions, PERMISSIONS_REQUEST_CODE);
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            
+            if (allGranted) {
+                Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Some permissions were denied. Some features may not work properly.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void setupRecyclerView() {
         Log.d(TAG, "Setting up RecyclerView");
         chatAdapter = new ChatAdapter(this);
-        binding.chatList.setLayoutManager(new LinearLayoutManager(this));
-        binding.chatList.setAdapter(chatAdapter);
-
-        // Add item decoration for dividers
-        binding.chatList.addItemDecoration(new androidx.recyclerview.widget.DividerItemDecoration(
-                this, androidx.recyclerview.widget.DividerItemDecoration.VERTICAL));
-
         chatAdapter.setOnChatClickListener(chat -> {
-            Log.d(TAG, "Chat clicked: " + chat.getId());
-            // Start a chat detail activity with shared element transition
-            Intent intent = new Intent(this, ChatDetailActivity.class);
+            // Navigate to chat detail screen
+            Intent intent = new Intent(HomeActivity.this, ChatDetailActivity.class);
             intent.putExtra("chatId", chat.getId());
-
-            // Add subtle scale animation for better feedback
-            View view = binding.chatList.findViewHolderForAdapterPosition(
-                    chatAdapter.getChatPosition(chat)).itemView;
-            view.animate()
-                    .scaleX(0.95f)
-                    .scaleY(0.95f)
-                    .setDuration(100)
-                    .withEndAction(() -> {
-                        view.animate().scaleX(1f).scaleY(1f).setDuration(100);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                    });
+            intent.putExtra("chatName", chat.getName());
+            intent.putExtra("chatPhotoUrl", chat.getPhotoUrl());
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
 
-        // Add scroll listener to hide/show FAB on scroll
+        binding.chatList.setAdapter(chatAdapter);
+        binding.chatList.setLayoutManager(new LinearLayoutManager(this));
+
+        // Add scroll listener for FAB show/hide behavior
         binding.chatList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -124,55 +162,53 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Apply layout animation when the list is first shown
+        binding.chatList.scheduleLayoutAnimation();
     }
 
     private void setupClickListeners() {
+        // Set up FAB click listener
         binding.fabNewChat.setOnClickListener(v -> {
-            // Animate the FAB
+            // Apply a quick scale animation to the FAB
             v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pulse));
-
-            // Navigate to contacts activity
+            
+            // Navigate to contacts selection
             Intent intent = new Intent(HomeActivity.this, ContactsActivity.class);
             startActivity(intent);
-        });
-
-        // Add empty state action button click listener
-        binding.emptyStateActionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(HomeActivity.this, ContactsActivity.class);
-            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         });
     }
 
     private void setupBottomNavigation() {
-        Log.d(TAG, "Setting up bottom navigation");
-        // Set the active item
-        binding.bottomNavigation.setSelectedItemId(R.id.navChats);
-
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
-            Log.d(TAG, "Bottom navigation item selected: " + item.getTitle());
-
             if (itemId == R.id.navChats) {
-                Log.d(TAG, "Chats tab selected");
-                // Already on chats
+                // Already on chats screen
                 return true;
             } else if (itemId == R.id.navCalls) {
-                Log.d(TAG, "Calls tab selected");
+                // Show a coming soon message for calls feature
                 Snackbar.make(binding.getRoot(), "Calls feature coming soon!", Snackbar.LENGTH_SHORT)
                         .setAnchorView(binding.bottomNavigation)
                         .show();
                 return true;
             } else if (itemId == R.id.navProfile) {
-                Log.d(TAG, "Profile tab selected, navigating to profile");
-                viewModel.navigateToProfile();
+                // Navigate to profile screen
+                Intent intent = new Intent(this, ProfileSetupActivity.class);
+                intent.putExtra("fromHome", true);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                 return true;
             }
             return false;
         });
+
+        // Set the initial selected item
+        binding.bottomNavigation.setSelectedItemId(R.id.navChats);
     }
 
     private void setupSearchView() {
-        binding.searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        binding.searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 filterChats(query);
@@ -185,28 +221,6 @@ public class HomeActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    private void filterChats(String query) {
-        if (viewModel.getChats().getValue() == null) return;
-
-        List<Chat> allChats = viewModel.getChats().getValue();
-        filteredChatList.clear();
-
-        if (query.isEmpty()) {
-            filteredChatList.addAll(allChats);
-        } else {
-            String lowercaseQuery = query.toLowerCase();
-            for (Chat chat : allChats) {
-                if ((chat.getName() != null && chat.getName().toLowerCase().contains(lowercaseQuery)) ||
-                        (chat.getLastMessage() != null && chat.getLastMessage().toLowerCase().contains(lowercaseQuery))) {
-                    filteredChatList.add(chat);
-                }
-            }
-        }
-
-        chatAdapter.updateData(filteredChatList);
-        checkEmptyState(filteredChatList);
     }
 
     private void setupSwipeActions() {
@@ -310,6 +324,28 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    private void filterChats(String query) {
+        if (viewModel.getChats().getValue() == null) return;
+
+        List<Chat> allChats = viewModel.getChats().getValue();
+        filteredChatList.clear();
+
+        if (query.isEmpty()) {
+            filteredChatList.addAll(allChats);
+        } else {
+            String lowercaseQuery = query.toLowerCase();
+            for (Chat chat : allChats) {
+                if ((chat.getName() != null && chat.getName().toLowerCase().contains(lowercaseQuery)) ||
+                        (chat.getLastMessage() != null && chat.getLastMessage().toLowerCase().contains(lowercaseQuery))) {
+                    filteredChatList.add(chat);
+                }
+            }
+        }
+
+        chatAdapter.updateData(filteredChatList);
+        checkEmptyState(filteredChatList);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_home, menu);
@@ -375,6 +411,23 @@ public class HomeActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    private void loadOrGenerateTestData() {
+        // Check if we already have chats
+        db.collection("chats")
+            .whereArrayContains("participants", auth.getCurrentUser().getUid())
+            .limit(1)
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult().isEmpty()) {
+                    // No chats found, generate test data
+                    generateTestData();
+                } else {
+                    // Chats exist, just load them
+                    viewModel.loadChats();
+                }
+            });
     }
 
     private void generateTestData() {
