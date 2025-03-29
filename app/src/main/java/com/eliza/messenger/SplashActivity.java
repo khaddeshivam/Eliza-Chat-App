@@ -8,12 +8,17 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 
 public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_screen);
+
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this);
 
         TextView textView = findViewById(R.id.splash_text);
         Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);

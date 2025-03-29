@@ -9,14 +9,14 @@
         android:id="@+id/button_back"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/back"
-        android:src="@drawable/left_arrow"
+        android:padding="12dp"
+        android:src="@drawable/ic_back"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/text_primary" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/text_title"
@@ -265,14 +265,15 @@
             android:textColor="@color/on_surface"
             android:textSize="24sp" />
 
-        <ImageButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_backspace"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="80dp"
-            android:src="@drawable/ic_backspace"
-            android:contentDescription="@string/backspace" />
+            android:text="⌫"
+            android:textColor="@color/on_surface"
+            android:textSize="24sp" />
 
     </GridLayout>
 

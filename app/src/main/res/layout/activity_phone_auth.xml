@@ -121,7 +121,7 @@
         android:layout_marginHorizontal="32dp"
         android:layout_marginBottom="32dp"
         android:backgroundTint="@color/primary"
-        android:enabled="false"
+        android:enabled="true"
         android:fontFamily="sans-serif-medium"
         android:paddingVertical="16dp"
         android:text="@string/continue_button"
@@ -254,14 +254,15 @@
             android:textColor="@color/text_primary"
             android:textSize="24sp" />
 
-        <ImageButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_backspace"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="80dp"
-            android:src="@drawable/ic_backspace"
-            android:contentDescription="@string/delete_number" />
+            android:text="⌫"
+            android:textColor="@color/on_surface"
+            android:textSize="24sp" />
 
     </GridLayout>
 

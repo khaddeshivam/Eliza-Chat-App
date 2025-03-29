@@ -2,23 +2,39 @@ package com.eliza.messenger.model;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ServerTimestamp;
+
+import java.util.Date;
 import java.util.List;
 
 public class Chat {
     private String id;
     private List<String> participants;
     private String lastMessage;
-    @ServerTimestamp
-    private Timestamp lastMessageTime;
+    private Object lastMessageTime; // Can be either Timestamp or Long
     private String lastSenderId;
     private boolean isGroup;
-    private String groupName;
+    private String name;
     private String groupIcon;
     private int unreadCount;
     private String photoUrl;
 
     // Required empty constructor for Firestore
     public Chat() {}
+
+    public Chat(String id, List<String> participants, String lastMessage, Object lastMessageTime,
+                String lastSenderId, boolean isGroup, String name, String groupIcon, int unreadCount,
+                String photoUrl) {
+        this.id = id;
+        this.participants = participants;
+        this.lastMessage = lastMessage;
+        this.lastMessageTime = lastMessageTime;
+        this.lastSenderId = lastSenderId;
+        this.isGroup = isGroup;
+        this.name = name;
+        this.groupIcon = groupIcon;
+        this.unreadCount = unreadCount;
+        this.photoUrl = photoUrl;
+    }
 
     public String getId() {
         return id;
@@ -44,12 +60,25 @@ public class Chat {
         this.lastMessage = lastMessage;
     }
 
-    public Timestamp getLastMessageTimestamp() {
-        return lastMessageTime != null ? new Timestamp(lastMessageTime.toDate()) : null;
+    public Object getLastMessageTime() {
+        return lastMessageTime;
     }
 
-    public void setLastMessageTime(Timestamp lastMessageTime) {
+    public void setLastMessageTime(Object lastMessageTime) {
         this.lastMessageTime = lastMessageTime;
+    }
+
+    public Timestamp getLastMessageTimestamp() {
+        if (lastMessageTime instanceof Timestamp) {
+            return (Timestamp) lastMessageTime;
+        } else if (lastMessageTime instanceof Long) {
+            return new Timestamp(new Date((Long) lastMessageTime));
+        }
+        return null;
+    }
+
+    public void setLastMessageTimestamp(Timestamp timestamp) {
+        this.lastMessageTime = timestamp;
     }
 
     public String getLastSenderId() {
@@ -68,12 +97,12 @@ public class Chat {
         isGroup = group;
     }
 
-    public String getGroupName() {
-        return groupName;
+    public String getName() {
+        return name;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getGroupIcon() {
@@ -100,9 +129,7 @@ public class Chat {
         this.photoUrl = photoUrl;
     }
 
-    public String getName() {
-        // Return group name for group chats, otherwise return null 
-        // (individual chat names are handled by the adapter using participant info)
-        return isGroup ? groupName : null;
+    public String getGroupName() {
+        return this.name;
     }
 }

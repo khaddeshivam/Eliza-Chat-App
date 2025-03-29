@@ -21,7 +21,4 @@
     <!-- Legacy Colors (kept for compatibility) -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-
-    <!-- Secondary Colors -->
-    <color name="secondaryTextColor">#757575</color>
 </resources>

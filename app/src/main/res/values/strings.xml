@@ -77,6 +77,7 @@
     <string name="typing">typing...</string>
     <string name="message_hint">Message</string>
     <string name="image_message">Image message</string>
+    <string name="typing_indicator">%1$s is typing...</string>
 
     <!-- Test Credentials -->
     <string name="test_phone">Test Phone</string>

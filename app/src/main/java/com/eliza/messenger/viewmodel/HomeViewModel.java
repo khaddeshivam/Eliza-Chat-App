@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel;
 import com.eliza.messenger.model.Chat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -42,11 +44,11 @@ public class HomeViewModel extends ViewModel {
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 List<Chat> chatList = new ArrayList<>();
-                queryDocumentSnapshots.forEach(doc -> {
-                    Chat chat = doc.toObject(Chat.class);
-                    chat.setId(doc.getId());
+                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                    Chat chat = document.toObject(Chat.class);
+                    chat.setId(document.getId());
                     chatList.add(chat);
-                });
+                }
                 chats.setValue(chatList);
                 isLoading.setValue(false);
             })

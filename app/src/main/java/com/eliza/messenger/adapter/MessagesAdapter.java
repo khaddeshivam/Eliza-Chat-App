@@ -135,6 +135,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
     }
     
+    // Add this method to remove messages
+    public void removeMessage(int position) {
+        messages.remove(position);
+        notifyItemRemoved(position);
+    }
+    
     // ViewHolder for sent text messages
     class SentMessageHolder extends RecyclerView.ViewHolder {
         private final ItemMessageSentBinding binding;
@@ -142,6 +148,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         SentMessageHolder(ItemMessageSentBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+            
+            // Set up long click listener for deletion
+            binding.getRoot().setOnLongClickListener(v -> {
+                if (onMessageClickListener != null) {
+                    onMessageClickListener.onMessageLongClick(messages.get(getAdapterPosition()), getAdapterPosition());
+                }
+                return true;
+            });
         }
         
         void bind(Message message) {
@@ -160,6 +174,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         ReceivedMessageHolder(ItemMessageReceivedBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+            
+            // Set up long click listener for deletion
+            binding.getRoot().setOnLongClickListener(v -> {
+                if (onMessageClickListener != null) {
+                    onMessageClickListener.onMessageLongClick(messages.get(getAdapterPosition()), getAdapterPosition());
+                }
+                return true;
+            });
         }
         
         void bind(Message message) {
@@ -225,5 +247,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             
             binding.messageTime.setText(formatTime(message.getTimestamp()));
         }
+    }
+    
+    // Add interface for message click events
+    public interface OnMessageClickListener {
+        void onMessageLongClick(Message message, int position);
+    }
+    
+    private OnMessageClickListener onMessageClickListener;
+    
+    public void setOnMessageClickListener(OnMessageClickListener listener) {
+        this.onMessageClickListener = listener;
     }
 }
