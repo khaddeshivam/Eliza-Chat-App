@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "118635625265",
+    "firebase_url": "https://eliza-chat-app-default-rtdb.firebaseio.com",
+    "project_id": "eliza-chat-app",
+    "storage_bucket": "eliza-chat-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118635625265:android:0261706f03ff21096fce10",
+        "android_client_info": {
+          "package_name": "com.eliza.messenger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "118635625265-4l64k6gni0760vdr5jhe3thv8gakrcdq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eliza.messenger",
+            "certificate_hash": "7ef857896de4a6cd2bafecdaa8266f6564b6a595"
+          }
+        },
+        {
+          "client_id": "118635625265-ljr3u9gs3f3hon6l1uk1g9c3dsvk9gpf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAT0H5TEiFnlkqyc5Db_ikVCPh20KBO9mQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "118635625265-ljr3u9gs3f3hon6l1uk1g9c3dsvk9gpf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
