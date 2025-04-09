@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/refresh_chats"
+        app:showAsAction="ifRoom" />
+        
+    <item
+        android:id="@+id/action_generate_test_data"
+        android:title="Generate Test Data"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+        
+    <item
+        android:id="@+id/action_more"
+        android:title="More"
+        android:orderInCategory="150"
+        app:showAsAction="never" />
+        
+    <item
+        android:id="@+id/action_sign_out"
+        android:title="@string/sign_out"
+        android:orderInCategory="200"
+        app:showAsAction="never" />
+</menu>

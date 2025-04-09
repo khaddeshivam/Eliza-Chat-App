@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Profile images
+    match /profile_images/{userId}/{imageId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isImage() && 
+        request.resource.size < 5 * 1024 * 1024; // 5MB max
+      allow update: if isOwner(userId) && isImage() &&
+        request.resource.size < 5 * 1024 * 1024;
+      allow delete: if isOwner(userId);
+    }
+
+    // Chat media
+    match /chat_media/{chatId}/{mediaId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+        request.resource.size < 10 * 1024 * 1024; // 10MB max
+      allow update, delete: if false; // Prevent modification
+    }
+  }
+}
